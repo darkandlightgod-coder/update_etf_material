@@ -1,0 +1,23 @@
+name: Run Yuanta Scraper
+on:
+  schedule:
+    - cron: '0 9 * * *' # 每天早上 9 點執行
+  workflow_dispatch: # 允許您在 GitHub 頁面手動點擊按鈕執行
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          playwright install chromium
+      - name: Run Scraper
+        env:
+          GSPREAD_JSON: ${{ secrets.GSPREAD_JSON }}
+          SHEET_ID: ${{ secrets.SHEET_ID }}
+        run: python yuanta_ratio_scraper.py
