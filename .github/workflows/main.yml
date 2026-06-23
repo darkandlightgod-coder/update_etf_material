@@ -1,16 +1,17 @@
-name: Run Yuanta Scraper
+name: Run All Scrapers
 
 on:
-  # 1. 每天定時自動執行 (UTC時間 01:00，等於台灣時間 09:00)
   schedule:
-    - cron: '0 1 * * *' 
-  
-  # 2. 允許在 GitHub 頁面「手動點擊」執行 (這就是您要的相容性)
+    - cron: '0 0 * * *' 
   workflow_dispatch: 
 
 jobs:
-  scrape:
+  # 並行任務定義
+  scrape-tasks:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        script: [yuanta_ratio_scraper.py, fubon_scraper.py]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -28,9 +29,6 @@ jobs:
 
       - name: Run Scraper
         env:
-          # 這裡確保了您的 Secret 會被傳入環境變數中
           GSPREAD_JSON: ${{ secrets.GSPREAD_JSON }}
           SHEET_ID: ${{ secrets.SHEET_ID }}
-        run: |
-          python yuanta_ratio_scraper.py
-          python fubon_scraper.py
+        run: python ${{ matrix.script }}
