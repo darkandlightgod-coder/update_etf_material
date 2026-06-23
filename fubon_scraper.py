@@ -26,15 +26,15 @@ class FubonScraper:
             client = gspread.authorize(creds)
             sheet = client.open_by_key(self.sheet_id)
             
-            # 使用 RAWDATA_FUBON 分頁
+            # 使用 RAWDATA006208 分頁
             try:
-                worksheet = sheet.worksheet("RAWDATA_FUBON")
+                worksheet = sheet.worksheet("RAWDATA006208")
             except gspread.exceptions.WorksheetNotFound:
-                worksheet = sheet.add_worksheet(title="RAWDATA_FUBON", rows="2000", cols="10")
+                worksheet = sheet.add_worksheet(title="RAWDATA006208", rows="2000", cols="10")
             
             worksheet.clear()
             worksheet.update(data)
-            logger.info("✅ 成功同步 Fubon 資料至 RAWDATA_FUBON")
+            logger.info("✅ 成功同步 Fubon 資料至 RAWDATA006208")
         except Exception as e:
             logger.error(f"Google Sheets 寫入失敗: {e}")
 
