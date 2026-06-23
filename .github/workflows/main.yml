@@ -33,3 +33,4 @@ jobs:
           SHEET_ID: ${{ secrets.SHEET_ID }}
         run: |
           python yuanta_ratio_scraper.py
+          python fubon_scraper.py
