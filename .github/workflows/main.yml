@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        script: [yuanta_ratio_scraper.py, fubon_scraper.py]
+        script: [0050.py, 006208.py]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
