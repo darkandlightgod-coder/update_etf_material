@@ -39,7 +39,7 @@ class YuantaRatioScraper:
             
             # 獲取或建立 RAWDATA 分頁
             try:
-                worksheet = sheet.worksheet("RAWDATA")
+                worksheet = sheet.worksheet("RAWDATA0050")
             except gspread.exceptions.WorksheetNotFound:
                 worksheet = sheet.add_worksheet(title="RAWDATA", rows="1000", cols="20")
             
