@@ -6,6 +6,7 @@ import gspread
 from playwright.async_api import async_playwright
 from oauth2client.service_account import ServiceAccountCredentials
 
+# 日誌設定
 logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(levelname)s | %(message)s')
 logger = logging.getLogger("FubonScraper")
 
@@ -25,15 +26,15 @@ class FubonScraper:
             client = gspread.authorize(creds)
             sheet = client.open_by_key(self.sheet_id)
             
-            # 確保 RAWDATA 分頁存在
+            # 使用 RAWDATA_FUBON 分頁
             try:
-                worksheet = sheet.worksheet("RAWDATA006208")
+                worksheet = sheet.worksheet("RAWDATA_FUBON")
             except gspread.exceptions.WorksheetNotFound:
-                worksheet = sheet.add_worksheet(title="RAWDATA", rows="1000", cols="20")
+                worksheet = sheet.add_worksheet(title="RAWDATA_FUBON", rows="2000", cols="10")
             
             worksheet.clear()
             worksheet.update(data)
-            logger.info("✅ 成功同步 Fubon 資料至 RAWDATA")
+            logger.info("✅ 成功同步 Fubon 資料至 RAWDATA_FUBON")
         except Exception as e:
             logger.error(f"Google Sheets 寫入失敗: {e}")
 
@@ -46,27 +47,35 @@ class FubonScraper:
                 logger.info(f"前往: {self.target_url}")
                 await page.goto(self.target_url, wait_until="networkidle")
 
-                # 1. 關閉彈出視窗
+                # 1. 關閉彈窗
                 close_btn = page.locator("button.agree")
                 if await close_btn.is_visible():
                     await close_btn.click()
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(2)
                     logger.info("彈窗已關閉")
 
-                # 2. 爬取網頁資料 (對應您提供的 XPath 路徑)
-                # 這裡使用 page.evaluate 讀取該 div 內的表格內容
+                # 2. 提取表格資料 (針對您提供的結構)
+                # 抓取 table1 類別底下的所有 tr，排除掉標題行
                 data = await page.evaluate('''() => {
-                    const table = document.querySelector('/html/body/form/article/div/div/div/div[2]/div[3]/div[2]');
-                    // 此處假設內容結構為 table 或 div 列表，需根據實際 HTML 調整解析邏輯
-                    const rows = Array.from(document.querySelectorAll('.data-row-selector')); 
-                    return rows.map(row => Array.from(row.querySelectorAll('td')).map(td => td.innerText.trim()));
+                    const rows = Array.from(document.querySelectorAll('table.table1 tbody tr'));
+                    const results = [];
+                    // 加入表頭
+                    results.push(['代碼', '名稱', '數量', '金額', '權重']);
+                    
+                    rows.forEach(row => {
+                        const cols = Array.from(row.querySelectorAll('td')).map(td => td.innerText.trim());
+                        // 過濾掉無意義的空行或格式不符的行
+                        if (cols.length >= 2 && !cols[0].includes('合計')) {
+                            results.push(cols);
+                        }
+                    });
+                    return results;
                 }''')
 
-                # 若需透過點擊下載按鈕處理 (如果網站是透過下載 CSV 處理)
-                # await page.locator("#mainContent_subMainContent_btnDownload").click()
-                
-                if data:
+                if len(data) > 1:
                     await self.save_to_sheets(data)
+                else:
+                    logger.warning("未抓取到有效資料，請檢查表格選取器")
 
             except Exception as e:
                 logger.error(f"爬取錯誤: {e}")
