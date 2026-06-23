@@ -27,7 +27,7 @@ class FubonScraper:
             
             # 確保 RAWDATA 分頁存在
             try:
-                worksheet = sheet.worksheet("RAWDATA")
+                worksheet = sheet.worksheet("RAWDATA006208")
             except gspread.exceptions.WorksheetNotFound:
                 worksheet = sheet.add_worksheet(title="RAWDATA", rows="1000", cols="20")
             
