@@ -32,3 +32,18 @@ jobs:
           GSPREAD_JSON: ${{ secrets.GSPREAD_JSON }}
           SHEET_ID: ${{ secrets.SHEET_ID }}
         run: python ${{ matrix.script }}
+
+  # 避免 60 天排程失效的 Keepalive 任務
+  keepalive-job:
+    name: Keepalive Workflow
+    runs-on: ubuntu-latest
+    needs: scrape-tasks # 確保在爬蟲任務完成後才執行
+    permissions:
+      actions: write
+      contents: write # 賦予寫入權限供 Keepalive 更新活躍狀態
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Keepalive Workflow
+        uses: gautamkrishnar/keepalive-workflow@v2
