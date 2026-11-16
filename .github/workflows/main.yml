@@ -2,8 +2,8 @@ name: Run All Scrapers
 
 on:
   schedule:
-    - cron: '0 0 * * *' 
-  workflow_dispatch: 
+    - cron: '0 0 * * *'
+  workflow_dispatch:
 
 jobs:
   # 並行任務定義
@@ -14,12 +14,12 @@ jobs:
         script: [0050.py, 006208.py]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.10'
 
       - name: Install dependencies
         run: |
@@ -33,17 +33,21 @@ jobs:
           SHEET_ID: ${{ secrets.SHEET_ID }}
         run: python ${{ matrix.script }}
 
-  # 避免 60 天排程失效的 Keepalive 任務
+  # 避免 60 天排程失效的 Keepalive 任務（使用原生 Git 空提交）
   keepalive-job:
     name: Keepalive Workflow
     runs-on: ubuntu-latest
     needs: scrape-tasks # 確保在爬蟲任務完成後才執行
+    if: always()        # 無論前面爬蟲成功或失敗，都強制執行保活
     permissions:
-      actions: write
-      contents: write # 賦予寫入權限供 Keepalive 更新活躍狀態
+      contents: write   # 賦予寫入權限以推送空 Commit
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
-        
-      - name: Keepalive Workflow
-        uses: gautamkrishnar/keepalive-workflow@v2
+        uses: actions/checkout@v4
+
+      - name: Keepalive Empty Commit
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git commit --allow-empty -m "chore: keepalive [skip ci]"
+          git push
